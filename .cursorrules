@@ -1,0 +1,13 @@
+I want to build a data-driven project regarding the European deeptech startups.
+I am considering how to use data from the EPO (European Patent Office).
+Here is their website: https://dtf.epo.org/datav/public/dashboard-frontend/host_epoorg.html#/explore?dataSet=1
+The broader problem I am interested in as a researcher is the seeming performance gap between European startups and American startups.
+The repository will contain some reports published on European or French startups, but I think those are mostly 'descriptive' studies - not really informing us on what's really happening.
+This repository will be used, with your help, to find ways to maybe 'correlate' the EPO data to other sources of data.
+Feel free to suggests me other sources of data. For the moment, two types of data I am interested in are: a) publicly available descriptions of the product and b) other publicly available information related to a given startup (e.g. partnership announcements, presence, branding, perceived strategy...)
+
+The idea of this repository is to use LLM-based agents and coding assistants to build a unique dataset, to come up with meaningful variables that could be extracted from the above sources (or any other sources we can extract).
+To build such database, we would need to build and maintain web scrapers, to define a list of meaningful publishable variables, our various prompts to extract variables from the scraped data. 
+
+Never create extra documentation files if we already have a documentation .md file under that folder.
+Avoid at all cost inflating file structure unnecessarily.

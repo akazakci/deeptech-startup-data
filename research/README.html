@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>European Deeptech Research</title>
+<style>
+@page{margin:1in}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;max-width:900px;margin:40px auto;padding:40px;line-height:1.7;color:#2c3e50}h1{color:#1a365d;font-size:2.2em;border-bottom:4px solid #3182ce;padding-bottom:15px;margin-bottom:30px}h2{color:#2d3748;font-size:1.6em;margin-top:40px;border-bottom:2px solid #cbd5e0;padding-bottom:10px}h3{color:#4a5568;font-size:1.3em;margin-top:25px}h4{color:#718096}code{background:#f7fafc;padding:3px 8px;border-radius:4px;font-family:Monaco,monospace;font-size:0.88em;color:#c7254e;border:1px solid #e2e8f0}pre{background:#2d3748;color:#e2e8f0;padding:20px;border-radius:8px;margin:20px 0}pre code{background:none;padding:0;border:none;color:#a0aec0}table{border-collapse:collapse;width:100%;margin:20px 0;box-shadow:0 2px 12px rgba(0,0,0,0.08)}thead tr{background:#3182ce;color:white}th{padding:14px 12px;font-weight:600;text-transform:uppercase;font-size:0.85em}td{padding:12px;border-bottom:1px solid #e2e8f0}tbody tr:nth-child(even){background:#f7fafc}tbody tr:hover{background:#edf2f7}ul{padding-left:28px}li{margin:6px 0}strong{color:#1a365d}@media print{body{padding:30px}h1,h2{page-break-after:avoid}table{page-break-inside:avoid}}
+</style></head><body>
+<h1>Research: European Deeptech Startup Analysis</h1>
+<p>This directory contains data, analysis code, and variable documentation for investigating the EU-US deeptech startup performance gap.</p>
+<h2>🎯 Research Question</h2>
+<p><strong>Why do European deeptech startups underperform compared to American counterparts?</strong></p>
+<p>Hypotheses to test:</p>
+<li>Product positioning clarity</li>
+<li>Market strategy articulation</li>
+<li>University spinout structures</li>
+<li>Patent quality vs. commercial success</li>
+<li>Ecosystem connections</li>
+<h2>📊 Variables & Definitions</h2>
+<p>This section explains what data we collect and <strong>why it matters</strong> for understanding European deeptech performance.</p>
+<h3>EPO Dataset Variables (Currently Extracted)</h3>
+<h4>Entity Identification</h4>
+<table><thead><tr>
+<th>Variable</th>
+<th>Explanation</th>
+</tr></thead><tbody>
+<p>|----------|-------------|</p>
+<tr>
+<td><code>unique_ID</code></td>
+<td>Unique identifier (e.g., "FR0283") — use this to join datasets and track entities across time.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>Company/university name — the entity we're analyzing.</td>
+</tr>
+<tr>
+<td><code>role</code></td>
+<td>Entity type: "company" (startup), "school" (university), "pro" (research org) — lets us segment by organizational form and compare spinout vs independent performance.</td>
+</tr>
+<tr>
+<td><code>country_name</code></td>
+<td>Home country (39 EU countries covered) — enables geographic clustering and cross-country comparison of deeptech intensity.</td>
+</tr>
+<tr>
+<td><code>city</code></td>
+<td>City location — useful for regional ecosystems (e.g., Munich vs Berlin, Cambridge vs London).</td>
+</tr>
+<tr>
+<td><code>latitude</code>, <code>longitude</code></td>
+<td>Precise coordinates — enables mapping, distance calculations, and proximity to universities/hubs.</td>
+</tr>
+<tr>
+<td><code>homepageUrl</code></td>
+<td>Company website URL — the primary source for scraping product descriptions, positioning, and strategy signals.</td>
+</tr>
+<tr>
+<td><code>tagline</code></td>
+<td>Brief description (e.g., "Renewable and harvestable marine resource") — gives a first signal of positioning clarity and market focus.</td>
+</tr>
+</tbody></table>
+<p><strong>Coverage</strong>: All entities have complete identification data except ~2% missing city and ~17% missing tagline.</p>
+<h4>Patent Variables (Innovation Metrics)</h4>
+<p><strong>Aggregate counts</strong> (from <code>applicants</code> endpoint — 100% coverage):</p>
+<table><thead><tr>
+<th>Variable</th>
+<th>Explanation</th>
+</tr></thead><tbody>
+<p>|----------|-------------|</p>
+<tr>
+<td><code>totalPatents</code></td>
+<td>Total patent applications filed — measures innovation output intensity; hypothesis: EU startups may file fewer patents than US peers.</td>
+</tr>
+<tr>
+<td><code>totalGrantedPatents</code></td>
+<td>Total patents granted — measures innovation quality/success; compare to US to see if EU patents have lower grant rates.</td>
+</tr>
+</tbody></table>
+<p><strong>Individual patent records</strong> (from <code>publications</code> endpoint — in progress):</p>
+<p>Each entity can have 0-N patents. We extract these to analyze patent *quality*, not just quantity.</p>
+<table><thead><tr>
+<th>Field</th>
+<th>Explanation</th>
+</tr></thead><tbody>
+<p>|-------|-------------|</p>
+<tr>
+<td><code>title</code></td>
+<td>Patent title (e.g., "BONE FIXATION DEVICE") — reveals what the technology actually does; enables LLM assessment of commercial relevance vs pure research.</td>
+</tr>
+<tr>
+<td><code>labels</code></td>
+<td>Technical field (e.g., "Oncology", "Energy") — shows technology focus; lets us test if EU startups are over-concentrated in certain fields vs diversified.</td>
+</tr>
+<tr>
+<td><code>docdb_filing_date</code></td>
+<td>When patent was filed — timing patterns reveal strategy: do EU startups file too early (research stage) or too late (after competitors)?</td>
+</tr>
+<tr>
+<td><code>granted</code></td>
+<td>Status: "EP granted", "Pending", "Refused / Withdrawn" — grant success rate may indicate patent quality; refused patents suggest weak IP strategy.</td>
+</tr>
+<tr>
+<td><code>pn</code></td>
+<td>Publication number — unique patent identifier for citation analysis (if extended).</td>
+</tr>
+<tr>
+<td><code>intention_to_license</code></td>
+<td>Whether entity offers to license — signals commercialization intent vs defensive patenting.</td>
+</tr>
+<tr>
+<td><code>applicant_orgs</code></td>
+<td>Co-applicants on the patent — reveals collaboration: EU startups often co-patent with universities, which may slow commercialization.</td>
+</tr>
+</tbody></table>
+<p><strong>Why patent details matter</strong>:</p>
+<p>Aggregate counts (<code>totalPatents=17</code>) don't tell you if those are high-quality commercial patents or low-quality research spillovers. Individual records let us score patent quality, measure technology diversity, and detect timing/collaboration patterns that may explain EU performance gaps.</p>
+<h4>Company Metadata (Business Characteristics)</h4>
+<p>These fields are nested in <code>company_info</code> (sourced from Dealroom/EPO partners, coverage ~85-90% for companies):</p>
+<table><thead><tr>
+<th>Variable</th>
+<th>Explanation</th>
+</tr></thead><tbody>
+<p>|----------|-------------|</p>
+<tr>
+<td><code>industries</code></td>
+<td>Industry labels (e.g., ["Health Tech", "Energy"]) — enables sector-specific analysis; test if certain industries underperform in EU vs US.</td>
+</tr>
+<tr>
+<td><code>growth_stage</code></td>
+<td>Lifecycle stage ("Founding", "Early Growth", "Late Growth", "Acquired", "Closed") — tracks progression; compare EU vs US advancement rates.</td>
+</tr>
+<tr>
+<td><code>company_status</code></td>
+<td>Operational status ("Operational", "Acquired", "Closed") — survival/exit outcomes; key performance indicator for ecosystem health.</td>
+</tr>
+<tr>
+<td><code>employee_count</code></td>
+<td>Employee range ("2-10", "11-50", etc.) — proxy for growth and scale; hypothesis: EU startups stay smaller longer than US peers.</td>
+</tr>
+<tr>
+<td><code>founded_on_dt</code></td>
+<td>Founding date (YYYY-MM-DD) — enables cohort analysis and time-to-milestone calculations (e.g., years to Series A).</td>
+</tr>
+</tbody></table>
+<h4>Ecosystem Connections (Network Position)</h4>
+<table><thead><tr>
+<th>Variable</th>
+<th>Explanation</th>
+</tr></thead><tbody>
+<p>|----------|-------------|</p>
+<tr>
+<td><code>investors</code></td>
+<td>List of linked investors/institutions — reveals funding networks; test if EU startups have less VC access or more reliance on public funding.</td>
+</tr>
+<tr>
+<td><code>spinoutsOfUniversity</code></td>
+<td>Parent university if spun out — identifies academic origins; university spinouts may have different dynamics (more IP, less market focus).</td>
+</tr>
+<tr>
+<td><code>spinoutsOfPRO</code></td>
+<td>Parent research org if spun out — similar to university spinouts but from institutes like Fraunhofer; may indicate deeper tech but slower GTM.</td>
+</tr>
+</tbody></table>
+<p><strong>Why ecosystem matters</strong>:</p>
+<p>EU has strong university-industry linkages but this may create path dependencies (academic governance, slower pivots). Investor presence signals access to growth capital vs bootstrapping.</p>
+<h3>Variables to Add via Web Scraping & LLM Analysis</h3>
+<p>These variables will be extracted from company websites and scored by LLM to measure <strong>positioning quality</strong> — a potential differentiator between EU and US startups.</p>
+<h4>Product Positioning (Website Scraping → LLM Scoring)</h4>
+<table><thead><tr>
+<th>Variable</th>
+<th>Explanation</th>
+<th>Why It Matters for EU Performance</th>
+</tr></thead><tbody>
+<p>|----------|-------------|-----------------------------------|</p>
+<tr>
+<td><code>product_description</code></td>
+<td>Main product/service description extracted from homepage — test if EU startups explain their offerings clearly vs US startups who may be more customer-centric.</td>
+</tr>
+<tr>
+<td><code>positioning_clarity</code></td>
+<td>LLM score (0-1): How clearly does the company explain what it does? — Draghi report hints at commercialization gaps; unclear positioning may signal market disconnect.</td>
+</tr>
+<tr>
+<td><code>value_proposition</code></td>
+<td>Value prop statement ("We help X do Y by Z") — tests if EU startups articulate customer value or focus on technology features.</td>
+</tr>
+<tr>
+<td><code>target_market</code></td>
+<td>Stated target market (B2B/B2C/B2G, industries, geographies) — hypothesis: EU startups may have less defined GTM than US peers.</td>
+</tr>
+<tr>
+<td><code>technical_depth</code></td>
+<td>LLM score (0-1): Technical credibility of descriptions — do EU startups over-index on deep tech credentials vs commercial outcomes?</td>
+</tr>
+</tbody></table>
+<h4>Market Presence & Validation</h4>
+<table><thead><tr>
+<th>Variable</th>
+<th>Explanation</th>
+<th>Why It Matters</th>
+</tr></thead><tbody>
+<p>|----------|-------------|----------------|</p>
+<tr>
+<td><code>linkedin_followers</code></td>
+<td>LinkedIn follower count — proxy for market attention and brand strength; compare EU vs US for similar-stage companies.</td>
+</tr>
+<tr>
+<td><code>employee_count</code></td>
+<td>Current employee count (from LinkedIn/website) — growth proxy; test if EU startups scale teams slower than US equivalents.</td>
+</tr>
+<tr>
+<td><code>recent_news_count</code></td>
+<td>News mentions in last 12 months — media visibility may correlate with fundraising success; EU startups may have lower PR investment.</td>
+</tr>
+<tr>
+<td><code>partnership_announcements</code></td>
+<td>Count of announced corporate/academic partnerships — signals commercial traction; hypothesis: EU startups form partnerships but may not convert to revenue.</td>
+</tr>
+</tbody></table>
+<h4>LLM-Extracted Strategy Scores (0-1 scale)</h4>
+<p>These will be computed from website text to quantify "soft" factors that traditional reports miss:</p>
+<table><thead><tr>
+<th>Variable</th>
+<th>What LLM Evaluates</th>
+<th>Research Hypothesis</th>
+</tr></thead><tbody>
+<p>|----------|-------------------|---------------------|</p>
+<tr>
+<td><code>positioning_clarity</code></td>
+<td>Can a reader quickly understand what the company does and who it serves?</td>
+<td>EU startups may have weaker GTM communication due to academic origins or tech-first culture.</td>
+</tr>
+<tr>
+<td><code>market_focus</code></td>
+<td>Is the target market well-defined or vague/aspirational?</td>
+<td>EU startups may target "Europe" broadly vs US startups targeting specific verticals/segments.</td>
+</tr>
+<tr>
+<td><code>commercial_readiness</code></td>
+<td>Do they show customer traction, case studies, or is it all R&D?</td>
+<td>EU deeptech may stay in "development" stage longer (valley of death).</td>
+</tr>
+<tr>
+<td><code>competitive_differentiation</code></td>
+<td>Do they clearly articulate advantages vs alternatives?</td>
+<td>Weak differentiation → harder fundraising → slower growth.</td>
+</tr>
+<tr>
+<td><code>technical_credibility</code></td>
+<td>Are technical claims credible/specific or generic/buzzwordy?</td>
+<td>This should be an EU *strength* if messaging is effective.</td>
+</tr>
+</tbody></table>
+<h3>Dealroom variables (imported, not scraped)</h3>
+<p>Dealroom (as shown in the UI screenshots) can provide variables like:</p>
+<li>employee range, founding date, HQ location (as listed)</li>
+<li>funding rounds (round, date, amount), investor names</li>
+<li>valuations/enterprise value (if available), “signals”/scores, tags/categories</li>
+<p>We do <strong>not</strong> scrape Dealroom directly in this repository. The intended workflow is:</p>
+<p>1) Export a Dealroom CSV through an allowed route</p>
+<p>2) Merge it onto our EPO company table by website domain/name</p>
+<p>See <code>data_collection/import_dealroom_export.py</code>.</p>
+<h2>📁 Data Organization</h2>
+<pre><code>
+research/
+├── data/
+│   ├── raw/                    # Raw extracted data
+│   │   └── epo_deeptech_complete_YYYY-MM-DD.json
+│   ├── processed/              # Cleaned & structured data
+│   │   ├── entities.csv        # Main dataset
+│   │   ├── companies.csv       # Companies only
+│   │   ├── universities.csv    # Universities only
+│   └── enriched/               # + Web scraping & LLM analysis
+│       ├── companies_enriched.csv
+│       └── llm_scores.csv
+│
+├── analysis/                   # Analysis scripts
+│   ├── 00_verify_data_integrity.py # Validate raw extract
+│   └── 01_data_processing.py       # Clean & process raw data into CSV
+│
+├── docs/                       # Research documentation
+│   ├── project_plan.md         # Overall research plan
+│   ├── variable_definitions.md # Detailed variable docs
+│
+└── README.md                   # This file
+</code></pre>
+<h2>🔬 Analysis Pipeline</h2>
+<h3>Phase 1: Data Processing (Week 1)</h3>
+<pre><code>
+python3 analysis/01_data_processing.py
+# Input:  data/raw/epo_deeptech_complete_*.json
+# Output: data/processed/entities.csv
+</code></pre>
+<p>Future phases (EDA, enrichment scrapers, LLM extraction, statistical testing) will be added as new scripts under <code>research/analysis/</code> and documented here when they exist.</p>
+<h2>📊 Expected Analyses</h2>
+<p>1. <strong>Descriptive Statistics</strong></p>
+<p>   - Geographic distribution of deeptech</p>
+<p>   - Patent activity by country/field</p>
+<p>   - Funding progression patterns</p>
+<p>   - Spinout vs. independent startups</p>
+<p>2. <strong>Correlation Analysis</strong></p>
+<p>   - Positioning clarity ↔ Funding success</p>
+<p>   - Patent count ↔ Commercial readiness</p>
+<p>   - University affiliation ↔ Survival rate</p>
+<p>   - Technical field ↔ Growth trajectory</p>
+<p>3. <strong>Comparative Analysis</strong> (if US data available)</p>
+<p>   - EU vs. US positioning clarity</p>
+<p>   - Patent-to-commercial ratios</p>
+<p>   - Spinout performance differences</p>
+<p>   - Market communication patterns</p>
+<p>4. <strong>Predictive Modeling</strong></p>
+<p>   - What predicts funding success?</p>
+<p>   - What predicts survival/acquisition?</p>
+<p>   - Can we identify "at-risk" startups?</p>
+<h2>📝 Variable Extension Protocol</h2>
+<p>When adding new variables:</p>
+<p>1. <strong>Document in this README</strong></p>
+<p>   - Add to appropriate table above</p>
+<p>   - Specify source, coverage, priority</p>
+<p>2. <strong>Update <code>docs/variable_definitions.md</code></strong></p>
+<p>   - Detailed definition</p>
+<p>   - Collection methodology</p>
+<p>   - Example values</p>
+<p>   - Known limitations</p>
+<p>3. <strong>Add to processing scripts</strong></p>
+<p>   - Update relevant analysis scripts</p>
+<p>   - Ensure compatibility with existing pipeline</p>
+<p>4. <strong>Version control</strong></p>
+<p>   - Note date added</p>
+<p>   - Track which analyses use it</p>
+<h2>🎓 Citation & Attribution</h2>
+<h3>Data Sources</h3>
+<li><strong>EPO Deep Tech Finder</strong>: European Patent Office (https://dtf.epo.org)</li>
+<li><strong>Additional sources</strong>: To be added as we extend dataset</li>
+<h3>Publication Guidelines</h3>
+<p>When publishing results:</p>
+<p>1. Cite EPO Deep Tech Finder as primary data source</p>
+<p>2. Document extraction date (data is point-in-time)</p>
+<p>3. Note any filtering/exclusions applied</p>
+<p>4. Share variable definitions and methodology</p>
+<p>5. Consider making processed data available (if legally permissible)</p>
+<h2>🔄 Data Updates</h2>
+<li><strong>EPO Data</strong>: Re-extract quarterly for freshness</li>
+<li><strong>Web Data</strong>: Re-scrape annually (websites change slowly)</li>
+<li><strong>LLM Variables</strong>: Re-compute if prompts change significantly</li>
+<p>---</p>
+<p><strong>Last Updated</strong>: December 2025</p>
+<p><strong>Dataset Version</strong>: 1.0</p>
+<p><strong>Total Variables</strong>: 15 (EPO) + ~25 (planned)</p>
+<div style="margin-top:50px;padding:20px;background:#edf2f7;border-radius:8px;text-align:center">
+<p><strong>To save as PDF:</strong> Cmd+P → "Save as PDF"</p></div>
+</body></html>

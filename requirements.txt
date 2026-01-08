@@ -1,0 +1,17 @@
+# Core dependencies for EPO data extraction and analysis
+
+# Browser automation (choose one or both)
+playwright>=1.40.0
+cloudscraper>=1.2.71
+
+# Alternative browser automation (if Playwright doesn't work)
+selenium>=4.15.0
+undetected-chromedriver>=3.5.4
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Utilities
+requests>=2.31.0
+

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>EPO Publications Manual Extractor</title>
+</head>
+<body>
+<h2>EPO Publications Manual Extractor</h2>
+
+<p><strong>Instructions:</strong></p>
+<ol>
+    <li>Open <a href="https://dtf.epo.org/datav/public/dashboard-frontend/host_epoorg.html#/explore?dataSet=1" target="_blank">EPO Deep Tech Finder</a></li>
+    <li>Wait for the page to fully load and pass Cloudflare</li>
+    <li>Open browser console (F12 or Cmd+Option+J)</li>
+    <li>Copy and paste the script below into the console</li>
+    <li>Press Enter and wait (progress updates every 10 entities)</li>
+    <li>When complete, copy the JSON output and save as <code>epo_publications_manual_YYYY-MM-DD.json</code></li>
+</ol>
+
+<h3>Console Script:</h3>
+<textarea id="script" style="width:100%; height:400px; font-family:monospace; font-size:12px;">
+(async function() {
+    const API_URL = 'https://dtf.epo.org/datav/public/datavisualisation/api/dataset/1/publications';
+    
+    // Load entity list from your saved file
+    console.log('MANUAL SETUP REQUIRED:');
+    console.log('1. Load your epo_deeptech_complete_2025-12-18.json file');
+    console.log('2. Extract the entities array');
+    console.log('3. Filter to only entities NOT in epo_publications_2025-12-18.jsonl');
+    console.log('4. Set the entities variable below');
+    console.log('');
+    console.log('Example:');
+    console.log('  const entities = [');
+    console.log('    {unique_ID: "ORG12345", name: "Company A", role: "company"},');
+    console.log('    {unique_ID: "ORG67890", name: "Company B", role: "company"},');
+    console.log('    // ... more entities');
+    console.log('  ];');
+    console.log('');
+    console.log('After setting entities, run the extraction function below.');
+    
+    // You need to manually set this from your data
+    const entities = []; // << PASTE YOUR ENTITIES HERE
+    
+    if (entities.length === 0) {
+        console.error('No entities defined. See instructions above.');
+        return;
+    }
+    
+    const results = [];
+    
+    for (let i = 0; i < entities.length; i++) {
+        const entity = entities[i];
+        const org_id = entity.unique_ID;
+        const name = entity.name;
+        
+        let allPubs = [];
+        let token = "";
+        let pageNo = 0;
+        
+        while (true) {
+            pageNo++;
+            try {
+                const resp = await fetch(API_URL, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json, text/plain, */*',
+                        'Origin': 'https://dtf.epo.org',
+                        'Referer': 'https://dtf.epo.org/datav/public/dashboard-frontend/host_epoorg.html'
+                    },
+                    body: JSON.stringify({
+                        nextPageToken: token,
+                        filters: [{filter_id: "org_id", filter_values: [{id: org_id}]}]
+                    })
+                });
+                
+                if (!resp.ok) {
+                    console.error(`HTTP ${resp.status} for ${name}`);
+                    results.push({
+                        org_id, name, role: entity.role,
+                        error: true, http_status: resp.status
+                    });
+                    break;
+                }
+                
+                const data = await resp.json();
+                const pubs = data.publications || [];
+                allPubs.push(...pubs);
+                
+                token = data.nextPageToken || "";
+                if (!token || pubs.length === 0) break;
+                
+            } catch (e) {
+                console.error(`Error for ${name}: ${e}`);
+                results.push({
+                    org_id, name, role: entity.role,
+                    error: true, message: e.toString()
+                });
+                break;
+            }
+            
+            await new Promise(r => setTimeout(r, 200)); // 200ms delay between pages
+        }
+        
+        results.push({
+            org_id, name, role: entity.role,
+            publications: allPubs,
+            publication_count: allPubs.length
+        });
+        
+        if ((i + 1) % 10 === 0 || i === entities.length - 1) {
+            console.log(`Progress: ${i + 1}/${entities.length} entities complete`);
+        }
+        
+        await new Promise(r => setTimeout(r, 300)); // 300ms delay between entities
+    }
+    
+    console.log('EXTRACTION COMPLETE');
+    console.log(`Total entities processed: ${results.length}`);
+    console.log('');
+    console.log('Copy the JSON below:');
+    console.log(JSON.stringify(results, null, 2));
+    
+    return results;
+})();
+</textarea>
+
+<button onclick="navigator.clipboard.writeText(document.getElementById('script').value)">Copy Script to Clipboard</button>
+
+<h3>Alternative: Python Helper to Generate Entity List</h3>
+<p>Run this in your terminal to generate the entities array for remaining items:</p>
+<pre>python3 << 'EOF'
+import json
+from pathlib import Path
+
+# Load complete entity list
+with open('research/data/raw/epo_deeptech_complete_2025-12-18.json', 'r') as f:
+    data = json.load(f)
+entities = data['entities']
+
+# Load already-extracted IDs
+done_ids = set()
+pub_file = Path('research/data/raw/epo_publications_2025-12-18.jsonl')
+if pub_file.exists():
+    with open(pub_file, 'r') as f:
+        for line in f:
+            try:
+                obj = json.loads(line)
+                org_id = obj.get('org_id')
+                if org_id:
+                    done_ids.add(str(org_id))
+            except:
+                pass
+
+# Filter to remaining companies only
+remaining = [e for e in entities if e['role'] == 'company' and str(e['unique_ID']) not in done_ids]
+
+print(f'Remaining to extract: {len(remaining)} entities')
+print()
+print('Copy this JavaScript array:')
+print()
+print('const entities = ', end='')
+print(json.dumps(remaining, indent=2))
+print(';')
+EOF
+</pre>
+
+</body>
+</html>
+

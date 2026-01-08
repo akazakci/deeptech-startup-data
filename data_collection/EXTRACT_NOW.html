@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EPO Data Extraction</title>
+    <style>
+        body { font-family: monospace; max-width: 900px; margin: 50px auto; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+        h1 { color: #4ec9b0; }
+        h2 { color: #dcdcaa; }
+        .instruction { background: #2d2d2d; padding: 15px; margin: 10px 0; border-left: 4px solid #4ec9b0; }
+        .code { background: #1e1e1e; padding: 10px; border: 1px solid #3e3e3e; overflow-x: auto; }
+        button { background: #0e639c; color: white; padding: 15px 30px; border: none; cursor: pointer; font-size: 16px; margin: 10px 5px; }
+        button:hover { background: #1177bb; }
+        #status { margin: 20px 0; padding: 15px; background: #2d2d2d; border-left: 4px solid #dcdcaa; }
+        #progress { color: #4ec9b0; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🔬 EPO Deep Tech Finder - Data Extraction</h1>
+    
+    <div class="instruction">
+        <h2>Instructions:</h2>
+        <ol>
+            <li>Open <a href="https://dtf.epo.org/datav/public/dashboard-frontend/host_epoorg.html#/explore?dataSet=1" target="_blank" style="color: #4ec9b0;">EPO Deep Tech Finder</a> in another tab</li>
+            <li>On that page, press <strong>F12</strong> (or Cmd+Option+I on Mac) to open DevTools</li>
+            <li>Click the <strong>Console</strong> tab</li>
+            <li>Click the button below to copy the extraction script</li>
+            <li>Paste it into the Console and press Enter</li>
+            <li>Wait 5-10 minutes for extraction to complete</li>
+            <li>The data will download automatically as JSON</li>
+        </ol>
+    </div>
+
+    <button onclick="copyScript()">📋 Copy Extraction Script</button>
+    <button onclick="window.open('https://dtf.epo.org/datav/public/dashboard-frontend/host_epoorg.html#/explore?dataSet=1', '_blank')">🔗 Open EPO Website</button>
+
+    <div id="status" style="display:none;">
+        <div id="progress">Script copied to clipboard!</div>
+        Now paste it into the browser console on the EPO page.
+    </div>
+
+    <h2>What You'll Get:</h2>
+    <div class="instruction">
+        <strong>File:</strong> epo_deeptech_complete_[date].json<br>
+        <strong>Size:</strong> ~15-20 MB<br>
+        <strong>Entities:</strong> All companies, universities, and research orgs<br>
+        <strong>Fields per entity:</strong> name, type, country, coordinates, patent totals, investors, spinout links, and basic nested org info.
+    </div>
+
+    <script id="extraction-script" type="text/plain">
+// EPO COMPLETE DATA EXTRACTION (WORKING METHOD)
+// Uses nextPageToken pagination (this is the stable method; the older page/size payload can 500).
+(async function () {
+    console.log('%c🚀 EPO Complete Data Extraction Started', 'font-size: 16px; font-weight: bold; color: #4ec9b0');
+    console.log('This will take 5-10 minutes. Do not close this tab.\n');
+    
+    const API_URL = 'https://dtf.epo.org/datav/public/datavisualisation/api/dataset/1/applicants';
+    const results = {
+        extraction_date: new Date().toISOString(),
+        entities: [],
+        counts: { companies: 0, universities: 0, research_orgs: 0 }
+    };
+    
+    async function fetchAll(token) {
+        const resp = await fetch(API_URL, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json, text/plain, */*',
+                'Origin': 'https://dtf.epo.org',
+                'Referer': 'https://dtf.epo.org/datav/public/dashboard-frontend/host_epoorg.html'
+            },
+            body: JSON.stringify({ nextPageToken: token, filters: [] })
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+    }
+
+    console.log(`\n${'='.repeat(60)}`);
+    console.log('📥 Fetching applicants (all entity types)...');
+    console.log('='.repeat(60));
+
+    let token = "";
+    let page = 0;
+    while (true) {
+        page += 1;
+        console.log(`  Page ${page} token="${token}"...`);
+        const data = await fetchAll(token);
+        const batch = data.applicants || data.content || [];
+        if (!batch.length) {
+            console.log('    No more data.');
+            break;
+        }
+        results.entities.push(...batch);
+        token = data.nextPageToken || "";
+        console.log(`    ✓ Got ${batch.length} (Total: ${results.entities.length}/${data.totalNrOfRows || '?'})`);
+        if (!token) break;
+        await new Promise(r => setTimeout(r, 350));
+    }
+
+    // Compute counts by role
+    for (const e of results.entities) {
+        if (e && e.role === 'company') results.counts.companies += 1;
+        else if (e && e.role === 'school') results.counts.universities += 1;
+        else if (e && e.role === 'pro') results.counts.research_orgs += 1;
+    }
+    
+    // Summary
+    console.log('\n' + '='.repeat(60));
+    console.log('%c✅ EXTRACTION COMPLETE!', 'font-size: 18px; font-weight: bold; color: #4ec9b0');
+    console.log('='.repeat(60));
+    console.log(`Total entities: ${results.entities.length}`);
+    console.log(`  • Companies: ${results.counts.companies}`);
+    console.log(`  • Universities: ${results.counts.universities}`);
+    console.log(`  • Research Orgs: ${results.counts.research_orgs}`);
+    console.log('='.repeat(60));
+    
+    // Auto-download
+    console.log('\n💾 Downloading file...');
+    const blob = new Blob([JSON.stringify(results, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `epo_deeptech_complete_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    console.log('%c✨ File downloaded! Check your Downloads folder.', 'font-size: 14px; color: #4ec9b0');
+    console.log('\nNext step: Move the file to /research/data/raw/ in your project folder.');
+    
+    return results;
+})();
+    </script>
+
+    <script>
+        function copyScript() {
+            const script = document.getElementById('extraction-script').textContent;
+            navigator.clipboard.writeText(script).then(() => {
+                document.getElementById('status').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('status').style.display = 'none';
+                }, 5000);
+            });
+        }
+    </script>
+</body>
+</html>
+
