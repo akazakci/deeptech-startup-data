@@ -31,7 +31,7 @@ epo/
 │
 ├── research/                 # Analysis & research outputs
 │   ├── README.md            # ⭐ Variables, sources, methodology
-│   ├── data/                # All datasets
+│   ├── data/                # Datasets (kept local/private; not committed to git)
 │   ├── analysis/            # Analysis scripts
 │   └── docs/                # Research documentation
 │
